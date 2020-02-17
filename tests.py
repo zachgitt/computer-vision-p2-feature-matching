@@ -102,7 +102,7 @@ tolerance range.
 
 This is not the script used by the autograder. 
 '''
-loaded = np.load('resources/arrays.npz')
+loaded = np.load('resources/arrays.npz', allow_pickle=True)
 d = unpickle_cv2(loaded['d_proc'])
 
 try_this(1, HKD.computeHarrisValues, [loaded['a'],loaded['b']], compare_array, grayImage)
