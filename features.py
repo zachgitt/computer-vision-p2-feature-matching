@@ -105,7 +105,7 @@ class HarrisKeypointDetector(KeypointDetector):
                 # Iterate over window
                 for i in window_heights:
                     for j in window_widths:
-                        # Use Sobel Operator for x,y derivatives
+                        # Use 3x3 Sobel Operator for x,y derivatives
                         # Use 5x5 Guassian Mask, 0.5sig, pixel > 4sig set to 0
                         # Use reflection for values outside image
                         pass
