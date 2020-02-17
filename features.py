@@ -94,6 +94,27 @@ class HarrisKeypointDetector(KeypointDetector):
         harrisImage = np.zeros(srcImage.shape[:2])
         orientationImage = np.zeros(srcImage.shape[:2])
 
+        window_heights = [-1, 0, 1]
+        window_widths = [-1, 0, 1]
+        # Per pixel
+        for h in height:
+            for w in width:
+
+                # Compute Harris Matrix for Pixel
+                H = np.zeros((2, 2))
+                # Iterate over window
+                for i in window_heights:
+                    for j in window_widths:
+                        # Use Sobel Operator for x,y derivatives
+                        # Use 5x5 Guassian Mask, 0.5sig, pixel > 4sig set to 0
+                        # Use reflection for values outside image
+                        pass
+
+                # Save corner strength
+                c = np.linalg.det(H) - 0.1 * np.trace(H)**2
+                harrisImage[h][w] = c
+
+
         # TODO 1: Compute the harris corner strength for 'srcImage' at
         # each pixel and store in 'harrisImage'.  See the project page
         # for direction on how to do this. Also compute an orientation
