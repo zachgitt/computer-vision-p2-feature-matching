@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import scipy
 from scipy import ndimage, spatial
-
+import math
 import transformations
 
 
@@ -77,6 +77,44 @@ class DummyKeypointDetector(KeypointDetector):
 
 class HarrisKeypointDetector(KeypointDetector):
 
+    def get_mirrored_image(self, srcImage, n=2):
+        sq1 = np.flip(srcImage[:n, :n])
+        sq2 = np.flip(srcImage[:n, -n:])
+        sq3= np.flip(srcImage[-n:, :n])
+        sq4 = np.flip(srcImage[-n:, -n:])
+
+        first_two_cols = np.flip(srcImage[:, :n], axis=1)
+        last_two_cols = np.flip(srcImage[:,-n:], axis=1)
+        first_two_cols = np.vstack((np.vstack((sq1, first_two_cols)), sq3))
+        last_two_cols = np.vstack((np.vstack((sq2, last_two_cols)), sq4))
+
+        first_two_rows = np.flip(srcImage[:n, :], axis=0)
+        last_two_rows = np.flip(srcImage[-n:, :], axis=0)
+
+        srcImage = np.vstack((first_two_rows, srcImage))
+        srcImage = np.vstack((srcImage, last_two_rows))
+
+        srcImage = np.hstack((first_two_cols, srcImage))
+        srcImage = np.hstack((srcImage, last_two_cols))
+
+        return srcImage
+
+    def get_random_image(self, shape):
+        return np.random.randint(0, 255, (shape))
+
+    def gaussian_blur_kernel_2d(self, sigma=0.5, height=5, width=5):
+        G = np.zeros((height, width))
+        const = 2 * (sigma ** 2)
+        num = 1 / (math.pi * const)
+        array1 = np.concatenate(
+            ([abs(height // 2 - i) for i in range(height // 2 + 1)], [i for i in range(1, height // 2 + 1)]))
+        array2 = np.concatenate(
+            ([abs(width // 2 - i) for i in range(width // 2 + 1)], [i for i in range(1, width // 2 + 1)]))
+        for x in range(len(array1)):
+            for y in range(len(array2)):
+                G[x][y] = math.e ** ((-1) * (array1[x] ** 2 + array2[y] ** 2) / float(const))
+        return G / np.sum(G)
+
     # Compute harris values of an image.
     def computeHarrisValues(self, srcImage):
         '''
@@ -90,38 +128,45 @@ class HarrisKeypointDetector(KeypointDetector):
                                 gradient at each pixel in degrees.
         '''
         height, width = srcImage.shape[:2]
+        # srcImage = self.get_random_image((height, width))
+        srcImage = self.get_mirrored_image(srcImage)
+        harrisImage = np.zeros((height, width))
+        orientationImage = np.zeros((height, width))
+        sobel_y = np.array([[1,2,1], [0, 0, 0], [-1,-2,-1]])
+        sobel_x = sobel_y.T
+        gauss_blur = self.gaussian_blur_kernel_2d()
 
-        harrisImage = np.zeros(srcImage.shape[:2])
-        orientationImage = np.zeros(srcImage.shape[:2])
+        # Flip Image For convolution:
+        srcImage = np.flip(srcImage)
 
-        window_heights = [-1, 0, 1]
-        window_widths = [-1, 0, 1]
-        # Per pixel
-        for h in height:
-            for w in width:
+        # Compute Harris Matrix for Pixel
+        for h in range(2, height):
+            for w in range(2, width):
 
-                # Compute Harris Matrix for Pixel
-                H = np.zeros((2, 2))
-                # Iterate over window
-                for i in window_heights:
-                    for j in window_widths:
-                        # Use 3x3 Sobel Operator for x,y derivatives
-                        # Use 5x5 Guassian Mask, 0.5sig, pixel > 4sig set to 0
-                        # Use reflection for values outside image
-                        pass
+                # Calculate gradients
+                grad_slice = srcImage[h-1:h+2, w-1:w+2]
+                i_x = np.sum(np.multiply(grad_slice, sobel_x))
+                i_y = np.sum(np.multiply(grad_slice, sobel_y))
 
+                # Calculate gaussian
+                gauss_slice = srcImage[h - 2:h + 3, w - 2:w + 3]
+                weight = np.sum(np.multiply(gauss_slice, gauss_blur))
+
+                if srcImage[h][w]!=0:
+                    print((h,w))
                 # Save corner strength
+                H = np.array([[weight*(i_x**2), weight*i_x*i_y], [weight*i_x*i_y, weight*(i_y**2)]])
                 c = np.linalg.det(H) - 0.1 * np.trace(H)**2
                 harrisImage[h][w] = c
 
-
-        # TODO 1: Compute the harris corner strength for 'srcImage' at
-        # each pixel and store in 'harrisImage'.  See the project page
-        # for direction on how to do this. Also compute an orientation
-        # for each pixel and store it in 'orientationImage.'
-        # TODO-BLOCK-BEGIN
-        raise Exception("TODO 1: in features.py not implemented")
-        # TODO-BLOCK-END
+                # Save orientation angle
+                if i_x == 0:
+                    if i_y >= 0:
+                        orientationImage[h][w] = 90
+                    else:
+                        orientationImage[h][w] = 270
+                else:
+                    orientationImage[h][w] = math.degrees(math.atan(i_y/i_x))
 
         return harrisImage, orientationImage
 
