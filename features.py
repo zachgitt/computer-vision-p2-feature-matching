@@ -4,7 +4,6 @@ import cv2
 import numpy as np
 import scipy
 from scipy import ndimage, spatial
-from scipy.spatial import distance
 import math
 import transformations
 
@@ -354,7 +353,6 @@ class ORBFeatureDescriptor(KeypointDetector):
         kps, desc = descriptor.compute(image, keypoints)
         if desc is None:
             desc = np.zeros((0, 128))
-
         return desc
 
 
@@ -500,7 +498,7 @@ class RatioFeatureMatcher(FeatureMatcher):
         # Note: multiple features from the first image may match the same
         # feature in the second image.
         # You don't need to threshold matches in this function
-        Y = distance.cdist(desc1, desc2, 'sqeuclidean')
+        Y = spatial.distance.cdist(desc1, desc2, 'sqeuclidean')
         min_dist_indices = np.argpartition(Y, 2)
         for i, min_idx in enumerate(min_dist_indices):
             min_idx_first = min_idx[0]
