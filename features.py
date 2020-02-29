@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import scipy
 from scipy import ndimage, spatial
+from scipy.spatial import distance
 import math
 import transformations
 
@@ -452,15 +453,15 @@ class SSDFeatureMatcher(FeatureMatcher):
         if desc1.shape[0] == 0 or desc2.shape[0] == 0:
             return []
 
-        # TODO 7: Perform simple feature matching.  This uses the SSD
+        # Perform simple feature matching.  This uses the SSD
         # distance between two feature vectors, and matches a feature in
         # the first image with the closest feature in the second image.
         # Note: multiple features from the first image may match the same
         # feature in the second image.
-        # TODO-BLOCK-BEGIN
-        raise Exception("TODO 7: in features.py not implemented")
-        # TODO-BLOCK-END
-
+        Y = distance.cdist(desc1, desc2, 'sqeuclidean')
+        min_dist_indices = np.argmin(Y, axis=1)
+        for i, min_idx in enumerate(min_dist_indices):
+            matches.append(cv2.DMatch(i, min_idx, Y[i][min_idx]))
         return matches
 
 
@@ -492,17 +493,19 @@ class RatioFeatureMatcher(FeatureMatcher):
         if desc1.shape[0] == 0 or desc2.shape[0] == 0:
             return []
 
-        # TODO 8: Perform ratio feature matching.
+        # Perform ratio feature matching.
         # This uses the ratio of the SSD distance of the two best matches
         # and matches a feature in the first image with the closest feature in the
         # second image.
         # Note: multiple features from the first image may match the same
         # feature in the second image.
         # You don't need to threshold matches in this function
-        # TODO-BLOCK-BEGIN
-        raise Exception("TODO 8: in features.py not implemented")
-        # TODO-BLOCK-END
-
+        Y = distance.cdist(desc1, desc2, 'sqeuclidean')
+        min_dist_indices = np.argpartition(Y, 2)
+        for i, min_idx in enumerate(min_dist_indices):
+            min_idx_first = min_idx[0]
+            min_idx_second = min_idx[1]
+            matches.append(cv2.DMatch(i, min_idx_first, Y[i][min_idx_first]/Y[i][min_idx_second]))
         return matches
 
 
