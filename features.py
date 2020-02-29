@@ -115,6 +115,11 @@ class HarrisKeypointDetector(KeypointDetector):
                 G[x][y] = math.e ** ((-1) * (array1[x] ** 2 + array2[y] ** 2) / float(const))
         return G / np.sum(G)
 
+    def flip_kernel(self, kernel):
+        kernel = np.flip(kernel, 0)
+        return np.flip(kernel, 1)
+
+
     # Compute harris values of an image.
     def computeHarrisValues(self, srcImage):
         '''
@@ -128,46 +133,30 @@ class HarrisKeypointDetector(KeypointDetector):
                                 gradient at each pixel in degrees.
         '''
         height, width = srcImage.shape[:2]
-        # srcImage = self.get_random_image((height, width))
-        srcImage = self.get_mirrored_image(srcImage)
         harrisImage = np.zeros((height, width))
         orientationImage = np.zeros((height, width))
-        sobel_y = np.array([[1,2,1], [0, 0, 0], [-1,-2,-1]])
-        sobel_x = sobel_y.T
-        gauss_blur = self.gaussian_blur_kernel_2d()
 
-        # Flip Image For convolution:
-        srcImage = np.flip(srcImage)
+        dx = ndimage.sobel(srcImage, 0)  # horizontal derivative
+        dy = ndimage.sobel(srcImage, 1)  # vertical derivative
 
-        # Compute Harris Matrix for Pixel
-        for h in range(2, height):
-            for w in range(2, width):
+        ix_sq = dx**2
+        iy_sq = dy**2
+        ix_iy = np.multiply(dx, dy)
 
-                # Calculate gradients
-                grad_slice = srcImage[h-1:h+2, w-1:w+2]
-                i_x = np.sum(np.multiply(grad_slice, sobel_x))
-                i_y = np.sum(np.multiply(grad_slice, sobel_y))
+        s = 0.5
+        g_ix_sq = ndimage.gaussian_filter(ix_sq, sigma=s)
+        g_iy_sq = ndimage.gaussian_filter(iy_sq, sigma=s)
+        g_ix_iy = ndimage.gaussian_filter(ix_iy, sigma=s)
 
-                # Calculate gaussian
-                gauss_slice = srcImage[h - 2:h + 3, w - 2:w + 3]
-                weight = np.sum(np.multiply(gauss_slice, gauss_blur))
-
-                if srcImage[h][w]!=0:
-                    print((h,w))
-                # Save corner strength
-                H = np.array([[weight*(i_x**2), weight*i_x*i_y], [weight*i_x*i_y, weight*(i_y**2)]])
-                c = np.linalg.det(H) - 0.1 * np.trace(H)**2
+        for h in range(height):
+            for w in range(width):
+                H = np.array([[g_ix_sq[h][w], g_ix_iy[h][w]], [g_ix_iy[h][w], g_iy_sq[h][w]]])
+                c = np.linalg.det(H) - (0.1 * (np.trace(H)**2))
                 harrisImage[h][w] = c
-
-                # Save orientation angle
-                if i_x == 0:
-                    if i_y >= 0:
-                        orientationImage[h][w] = 90
-                    else:
-                        orientationImage[h][w] = 270
+                if dx[h][w] == 0 and dy[h][w] == 0:
+                    orientationImage[h][w] = 0
                 else:
-                    orientationImage[h][w] = math.degrees(math.atan(i_y/i_x))
-
+                    orientationImage[h][w] = math.degrees(math.atan2(dx[h][w], dy[h][w]))
         return harrisImage, orientationImage
 
     def computeLocalMaxima(self, harrisImage):
