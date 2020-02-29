@@ -170,14 +170,8 @@ class HarrisKeypointDetector(KeypointDetector):
                          the pixel value is the local maxima in
                          its 7x7 neighborhood.
         '''
-        destImage = np.zeros_like(harrisImage, np.bool)
+        return harrisImage == ndimage.filters.maximum_filter(harrisImage, size=(7,7), mode="constant")
 
-        # TODO 2: Compute the local maxima image
-        # TODO-BLOCK-BEGIN
-        raise Exception("TODO 2: in features.py not implemented")
-        # TODO-BLOCK-END
-
-        return destImage
 
     def detectKeypoints(self, image):
         '''
