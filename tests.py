@@ -61,11 +61,12 @@ def try_this(todo, run, truth, compare, *args, **kargs):
             if not compare(output[i], truth[i], **kargs):
                 print("TODO {} doesn't pass test: {}".format(todo, i))
                 pdb.set_trace()
-                failed+=1
+                failed += 1
     else:
         if not compare(output, truth, **kargs):
+            pdb.set_trace()
             print("TODO {} doesn't pass test".format(todo))
-            failed+=1
+            failed += 1
     return failed
 
 HKD = features.HarrisKeypointDetector()

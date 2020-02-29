@@ -272,8 +272,8 @@ class SimpleFeatureDescriptor(FeatureDescriptor):
         copy[2:-2, 2:-2] = grayImage
         for i, f in enumerate(keypoints):
             x, y = int(f.pt[0]), int(f.pt[1])
-            x+=2
-            y+=2
+            x += 2
+            y += 2
             desc[i] = copy[y-2:y+3, x-2:x+3].flatten()
             # The simple descriptor is a 5x5 window of intensities
             # sampled centered on the feature point. Store the descriptor
@@ -282,7 +282,6 @@ class SimpleFeatureDescriptor(FeatureDescriptor):
 
 
 class MOPSFeatureDescriptor(FeatureDescriptor):
-    # TODO: Implement parts of this function
     def describeFeatures(self, image, keypoints):
         '''
         Input:
@@ -303,30 +302,40 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
         grayImage = ndimage.gaussian_filter(grayImage, 0.5)
 
         for i, f in enumerate(keypoints):
-            # TODO 5: Compute the transform as described by the feature
+            # Compute the transform as described by the feature
             # location/orientation. You will need to compute the transform
             # from each pixel in the 40x40 rotated window surrounding
             # the feature to the appropriate pixels in the 8x8 feature
             # descriptor image.
-            transMx = np.zeros((2, 3))
 
-            # TODO-BLOCK-BEGIN
-            raise Exception("TODO 5: in features.py not implemented")
-            # TODO-BLOCK-END
+            height, width = grayImage.shape[0]/2, grayImage.shape[1]/2
+
+            x = -1*f.pt[1]
+            y = -1*f.pt[0]
+            theta = math.radians(f.angle)
+            R = transformations.get_rot_mx(0, 0, theta)
+            T1 = transformations.get_trans_mx(np.array([y, x, 0]))
+            S = transformations.get_scale_mx(1/5, 1/5, 0)
+            T2 = transformations.get_trans_mx(np.array([4, 4, 0]))
+            transMx = (T2 @ (S @ (R @ T1)))[:2,[0,1,3]]
 
             # Call the warp affine function to do the mapping
             # It expects a 2x3 matrix
             destImage = cv2.warpAffine(grayImage, transMx,
                 (windowSize, windowSize), flags=cv2.INTER_LINEAR)
 
-            # TODO 6: Normalize the descriptor to have zero mean and unit 
+            # Normalize the descriptor to have zero mean and unit
             # variance. If the variance is negligibly small (which we 
             # define as less than 1e-10) then set the descriptor
             # vector to zero. Lastly, write the vector to desc.
-            # TODO-BLOCK-BEGIN
-            raise Exception("TODO 6: in features.py not implemented")
-            # TODO-BLOCK-END
-
+            destImage = destImage.flatten()
+            mean = np.mean(destImage)
+            std = np.std(destImage)
+            if abs(std) < 1e-10:
+                destImage = np.zeros(windowSize**2)
+            else:
+                destImage = (destImage - mean)/std
+            desc[i] = destImage
         return desc
 
 
