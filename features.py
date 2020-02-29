@@ -1,8 +1,5 @@
-import math
-
 import cv2
 import numpy as np
-import scipy
 from scipy import ndimage, spatial
 import math
 import transformations
@@ -76,49 +73,6 @@ class DummyKeypointDetector(KeypointDetector):
 
 
 class HarrisKeypointDetector(KeypointDetector):
-
-    def get_mirrored_image(self, srcImage, n=2):
-        sq1 = np.flip(srcImage[:n, :n])
-        sq2 = np.flip(srcImage[:n, -n:])
-        sq3= np.flip(srcImage[-n:, :n])
-        sq4 = np.flip(srcImage[-n:, -n:])
-
-        first_two_cols = np.flip(srcImage[:, :n], axis=1)
-        last_two_cols = np.flip(srcImage[:,-n:], axis=1)
-        first_two_cols = np.vstack((np.vstack((sq1, first_two_cols)), sq3))
-        last_two_cols = np.vstack((np.vstack((sq2, last_two_cols)), sq4))
-
-        first_two_rows = np.flip(srcImage[:n, :], axis=0)
-        last_two_rows = np.flip(srcImage[-n:, :], axis=0)
-
-        srcImage = np.vstack((first_two_rows, srcImage))
-        srcImage = np.vstack((srcImage, last_two_rows))
-
-        srcImage = np.hstack((first_two_cols, srcImage))
-        srcImage = np.hstack((srcImage, last_two_cols))
-
-        return srcImage
-
-    def get_random_image(self, shape):
-        return np.random.randint(0, 255, (shape))
-
-    def gaussian_blur_kernel_2d(self, sigma=0.5, height=5, width=5):
-        G = np.zeros((height, width))
-        const = 2 * (sigma ** 2)
-        num = 1 / (math.pi * const)
-        array1 = np.concatenate(
-            ([abs(height // 2 - i) for i in range(height // 2 + 1)], [i for i in range(1, height // 2 + 1)]))
-        array2 = np.concatenate(
-            ([abs(width // 2 - i) for i in range(width // 2 + 1)], [i for i in range(1, width // 2 + 1)]))
-        for x in range(len(array1)):
-            for y in range(len(array2)):
-                G[x][y] = math.e ** ((-1) * (array1[x] ** 2 + array2[y] ** 2) / float(const))
-        return G / np.sum(G)
-
-    def flip_kernel(self, kernel):
-        kernel = np.flip(kernel, 0)
-        return np.flip(kernel, 1)
-
 
     # Compute harris values of an image.
     def computeHarrisValues(self, srcImage):
@@ -456,7 +410,7 @@ class SSDFeatureMatcher(FeatureMatcher):
         # the first image with the closest feature in the second image.
         # Note: multiple features from the first image may match the same
         # feature in the second image.
-        Y = distance.cdist(desc1, desc2, 'sqeuclidean')
+        Y = spatial.distance.cdist(desc1, desc2, 'sqeuclidean')
         min_dist_indices = np.argmin(Y, axis=1)
         for i, min_idx in enumerate(min_dist_indices):
             matches.append(cv2.DMatch(i, min_idx, Y[i][min_idx]))
