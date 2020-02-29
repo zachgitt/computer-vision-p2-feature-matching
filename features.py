@@ -210,17 +210,14 @@ class HarrisKeypointDetector(KeypointDetector):
                     continue
 
                 f = cv2.KeyPoint()
-
-                # TODO 3: Fill in feature f with location and orientation
                 # data here. Set f.size to 10, f.pt to the (x,y) coordinate,
                 # f.angle to the orientation in degrees and f.response to
                 # the Harris score
-                # TODO-BLOCK-BEGIN
-                raise Exception("TODO 3: in features.py not implemented")
-                # TODO-BLOCK-END
-
+                f.size = 10
+                f.pt = (x,y)
+                f.angle = orientationImage[y][x]
+                f.response = harrisImage[y][x]
                 features.append(f)
-
         return features
 
 
