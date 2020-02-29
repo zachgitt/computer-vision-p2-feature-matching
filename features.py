@@ -307,14 +307,13 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # from each pixel in the 40x40 rotated window surrounding
             # the feature to the appropriate pixels in the 8x8 feature
             # descriptor image.
-
-            height, width = grayImage.shape[0]/2, grayImage.shape[1]/2
-
-            x = -1*f.pt[1]
-            y = -1*f.pt[0]
+            x = -1* f.pt[0]
+            y = -1 * f.pt[1]
             theta = math.radians(f.angle)
-            R = transformations.get_rot_mx(0, 0, theta)
-            T1 = transformations.get_trans_mx(np.array([y, x, 0]))
+
+            # height, width = grayImage.shape[0]/2, grayImage.shape[1]/2
+            R = transformations.get_rot_mx(0, 0, -theta)
+            T1 = transformations.get_trans_mx(np.array([x, y, 0]))
             S = transformations.get_scale_mx(1/5, 1/5, 0)
             T2 = transformations.get_trans_mx(np.array([4, 4, 0]))
             transMx = (T2 @ (S @ (R @ T1)))[:2,[0,1,3]]
@@ -331,7 +330,7 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             destImage = destImage.flatten()
             mean = np.mean(destImage)
             std = np.std(destImage)
-            if abs(std) < 1e-10:
+            if std < 1e-5:
                 destImage = np.zeros(windowSize**2)
             else:
                 destImage = (destImage - mean)/std
