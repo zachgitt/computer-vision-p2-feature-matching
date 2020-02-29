@@ -232,7 +232,6 @@ class ORBKeypointDetector(KeypointDetector):
             (in degrees) and set the size to 10.
         '''
         detector = cv2.ORB_create()
-        # import pdb; pdb.set_trace()
         return detector.detect(image)
 
 
@@ -255,7 +254,6 @@ class FeatureDescriptor(object):
 
 
 class SimpleFeatureDescriptor(FeatureDescriptor):
-    # TODO: Implement parts of this function
     def describeFeatures(self, image, keypoints):
         '''
         Input:
@@ -270,16 +268,16 @@ class SimpleFeatureDescriptor(FeatureDescriptor):
         grayImage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         desc = np.zeros((len(keypoints), 5 * 5))
 
+        copy = np.zeros((grayImage.shape[0]+4, grayImage.shape[1]+4))
+        copy[2:-2, 2:-2] = grayImage
         for i, f in enumerate(keypoints):
             x, y = int(f.pt[0]), int(f.pt[1])
-
-            # TODO 4: The simple descriptor is a 5x5 window of intensities
+            x+=2
+            y+=2
+            desc[i] = copy[y-2:y+3, x-2:x+3].flatten()
+            # The simple descriptor is a 5x5 window of intensities
             # sampled centered on the feature point. Store the descriptor
             # as a row-major vector. Treat pixels outside the image as zero.
-            # TODO-BLOCK-BEGIN
-            raise Exception("TODO 4: in features.py not implemented")
-            # TODO-BLOCK-END
-
         return desc
 
 
